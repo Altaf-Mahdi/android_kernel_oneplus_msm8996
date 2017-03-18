@@ -4426,8 +4426,8 @@ static int synaptics_i2c_suspend(struct device *dev)
 		return -1;
 	}
     if(ts->support_hw_poweroff && (ts->gesture_enable == 0)){
-		atomic_set(&ts->is_stop,1);
-		touch_disable(ts);
+	    atomic_set(&ts->is_stop,1);
+	    touch_disable(ts);
 	    ret = tpd_power(ts,0);
 	    if (ret < 0)
 	        TPD_ERR("%s power off err\n",__func__);
