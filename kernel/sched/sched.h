@@ -1067,9 +1067,10 @@ static inline void finish_lock_switch(struct rq *rq, struct task_struct *prev)
 	 * After ->on_cpu is cleared, the task can be moved to a different CPU.
 	 * We must ensure this doesn't happen until the switch is completely
 	 * finished.
+	 *
+	 * Pairs with the control dependency and rmb in try_to_wake_up().
 	 */
-	smp_wmb();
-	prev->on_cpu = 0;
+	smp_store_release(&prev->on_cpu, 0);
 #endif
 #ifdef CONFIG_DEBUG_SPINLOCK
 	/* this is a valid case when another task releases the spinlock */
@@ -1502,10 +1503,9 @@ static inline unsigned long __cpu_util(int cpu, int delta, bool use_pelt)
 		util = max(util, cpu_rq(cpu)->cfs.avg.util_est);
 
 #ifdef CONFIG_SCHED_WALT
-	if (!walt_disabled && sysctl_sched_use_walt_cpu_util) {
-		util = cpu_rq(cpu)->prev_runnable_sum << SCHED_LOAD_SHIFT;
-		do_div(util, walt_ravg_window);
-	}
+	if (!walt_disabled && sysctl_sched_use_walt_cpu_util)
+		util = (cpu_rq(cpu)->prev_runnable_sum << SCHED_LOAD_SHIFT) /
+			walt_ravg_window;
 #endif
 	delta += util;
 	if (delta < 0)
